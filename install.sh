@@ -9,6 +9,11 @@ export __TIMEZONE=America/Sao_Paulo \
   __LANG=en_US.UTF-8 \
   __KEYMAP=us
 
+
+onNewRoot(){
+  arch-chroot /mnt bash -c "$@"
+}
+
 parted "$__DEVICE" --script mklabel gpt
 parted "$__DEVICE" --script mkpart "boot" fat32 1MiB 1025MiB 
 parted "$__DEVICE" --script mkpart "swap" linux-swap 1025MiB 5121MiB 
@@ -23,50 +28,45 @@ mount "${__DEVICE}3" /mnt
 mount --mkdir "${__DEVICE}1" /mnt/boot
 swapon "${__DEVICE}2"
 
-pacstrap -K /mnt base linux linux-firmware sudo
+pacstrap -K /mnt base linux linux-firmware sudo dhcpcd networkmanager resolvconf grub efibootmgr
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mnt
+onNewRoot ln -sf /usr/share/zoneinfo/"$__TIMEZONE" /etc/localtime
+onNewRoot hwclock --systohc
 
-ln -sf /usr/share/zoneinfo/"$__TIMEZONE" /etc/localtime
-hwclock --systohc
+sed -i "/${__LOCALE}/s/^#//" /mnt/etc/locale.gen
+onNewRoot locale-gen
 
-sed -i "/${__LOCALE}/s/^#//" /etc/locale.gen
-locale-gen
+echo "LANG=${__LANG}" > /mnt/etc/locale.conf
+echo "KEYMAP=${__KEYMAP}" > /mnt/etc/vconsole.conf
 
-echo "LANG=${__LANG}" > /etc/locale.conf
-echo "KEYMAP=${__KEYMAP}" > /etc/vconsole.conf
-
-echo "$__HOSTNAME" > /etc/hostname
-cat << EOF > /etc/hosts
+echo "$__HOSTNAME" > /mnt/etc/hostname
+cat << EOF > /mnt/etc/hosts
 127.0.0.1  localhost
 ::1        localhost
 127.0.1.1  $__HOSTNAME
 EOF
 
-useradd -m -G wheel -s /bin/bash "$__USERNAME"
-echo "$__USERNAME ALL=(ALL) ALL" > /etc/sudoers.d/"00_${__USERNAME}"
+onNewRoot useradd -m -G wheel -s /bin/bash "$__USERNAME"
+"$__USERNAME ALL=(ALL) ALL" > /mnt/etc/sudoers.d/"00_${__USERNAME}"
 
-echo -n "password for root: "
-read -r __ROOTPASS
-echo "$__ROOTPASS" | passwd -s root
+# echo -n "password for root: "
+# read -r __ROOTPASS
+onNewRoot echo "${__ROOTPASS:-"teste"}" | passwd -s root
 
-echo -n "password for ${__USERNAME}: "
-read -r __USERPASS
-echo "$__USERPASS" | passwd -s "$__USERNAME"
+# echo -n "password for ${__USERNAME}: "
+# read -r __USERPASS
+onNewRoot echo "${__USERPASS:-"teste"}" | passwd -s "$__USERNAME"
 
-pacman -S --noconfirm grub efibootmgr
-grub-install "${__DEVICE}1" --bootloader-id=GRUB
-grub-mkconfig -o /boot/grub/grub.cfg
+onNewRoot grub-install "${__DEVICE}1" --bootloader-id=GRUB
+onNewRoot grub-mkconfig -o /boot/grub/grub.cfg
 
-pacman -S --noconfirm dhcpcd networkmanager resolvconf
-systemctl enable dhcpcd
-systemctl enable NetworkManager
-systemctl enable systemd-resolved
-timedatectl set-ntp true
+onNewRoot systemctl enable dhcpcd
+onNewRoot systemctl enable NetworkManager
+onNewRoot systemctl enable systemd-resolved
+onNewRoot timedatectl set-ntp true
 
-exit
-umount /mnt/boot
-umount /mnt
-reboot
+# umount /mnt/boot
+# umount /mnt
+# reboot
