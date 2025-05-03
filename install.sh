@@ -51,7 +51,7 @@ passwd $__USERNAME
 echo "$__USERNAME ALL=(ALL) ALL" > /etc/sudoers.d/00_$__USERNAME
 
 pacman -S --noconfirm grub efibootmgr
-grub-install "${__DEVICE}1"
+grub-install "${__DEVICE}1" --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
 pacman -S --noconfirm dhcpcd networkmanager resolvconf
