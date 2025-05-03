@@ -25,7 +25,7 @@ mkswap "${__DEVICE}2"
 mkfs.ext4 "${__DEVICE}3"
 
 mount "${__DEVICE}3" /mnt
-mount --mkdir "${__DEVICE}1" /mnt/boot
+mount --mkdir "${__DEVICE}1" /mnt/boot/efi
 swapon "${__DEVICE}2"
 
 pacstrap -K /mnt base linux linux-firmware sudo dhcpcd networkmanager resolvconf grub efibootmgr
