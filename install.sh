@@ -11,14 +11,14 @@ export __TIMEZONE=America/Sao_Paulo \
 
 
 onNewRoot(){
-  arch-chroot /mnt bash -c "$@"
+  arch-chroot /mnt bash -c "$*"
 }
 
 parted "$__DEVICE" --script mklabel gpt
 parted "$__DEVICE" --script mkpart "boot" fat32 1MiB 1025MiB 
 parted "$__DEVICE" --script mkpart "swap" linux-swap 1025MiB 5121MiB 
 parted "$__DEVICE" --script mkpart "root" ext4 5121MiB 100%
-parted "$__DEVICE" --script set 1 boot on
+parted "$__DEVICE" --script set 1 bios_grub on
 
 mkfs.fat -F 32 "${__DEVICE}1"
 mkswap "${__DEVICE}2"
@@ -49,17 +49,17 @@ cat << EOF > /mnt/etc/hosts
 EOF
 
 onNewRoot useradd -m -G wheel -s /bin/bash "$__USERNAME"
-"$__USERNAME ALL=(ALL) ALL" > /mnt/etc/sudoers.d/"00_${__USERNAME}"
+echo "$__USERNAME ALL=(ALL) ALL" > /mnt/etc/sudoers.d/"00_${__USERNAME}"
 
 # echo -n "password for root: "
 # read -r __ROOTPASS
-onNewRoot echo "${__ROOTPASS:-"teste"}" | passwd -s root
+onNewRoot "echo "${__ROOTPASS:-teste}" | passwd -s root"
 
 # echo -n "password for ${__USERNAME}: "
 # read -r __USERPASS
-onNewRoot echo "${__USERPASS:-"teste"}" | passwd -s "$__USERNAME"
+onNewRoot "echo "${__USERPASS:-"teste"}" | passwd -s "$__USERNAME""
 
-onNewRoot grub-install "${__DEVICE}1" --bootloader-id=GRUB
+onNewRoot grub-install "${__DEVICE}" --bootloader-id=GRUB
 onNewRoot grub-mkconfig -o /boot/grub/grub.cfg
 
 onNewRoot systemctl enable dhcpcd
