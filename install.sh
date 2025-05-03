@@ -50,11 +50,11 @@ passwd root
 passwd $USERNAME
 echo "$USERNAME ALL=(ALL) ALL" > /etc/sudoers.d/00_$USERNAME
 
-pacman -S grub efibootmgr
+pacman -S --no-confirm grub efibootmgr
 grub-install "${DEVICE}1"
 grub-mkconfig -o /boot/grub/grub.cfg
 
-pacman -S dhcpcd networkmanager resolvconf
+pacman -S --no-confirm dhcpcd networkmanager resolvconf
 systemctl enable dhcpcd
 systemctl enable NetworkManager
 systemctl enable systemd-resolved
