@@ -38,17 +38,23 @@ __LOCALE-gen
 echo "__LANG=${__LANG}" > /etc/__LOCALE.conf
 echo "__KEYMAP=${__KEYMAP}" > /etc/vconsole.conf
 
-echo "$__HOSTNAME" > /etc/__HOSTNAME
+echo "$__HOSTNAME" > /etc/hostname
 cat << EOF > /etc/hosts
 127.0.0.1  localhost
 ::1        localhost
 127.0.1.1  $__HOSTNAME
 EOF
 
-useradd -m -G wheel -s /bin/bash $__USERNAME
-passwd root
-passwd $__USERNAME
-echo "$__USERNAME ALL=(ALL) ALL" > /etc/sudoers.d/00_$__USERNAME
+useradd -m -G wheel -s /bin/bash "$__USERNAME"
+echo "$__USERNAME ALL=(ALL) ALL" > /etc/sudoers.d/"00_${__USERNAME}"
+
+echo -n "password for root: "
+read -r __ROOTPASS
+echo "$__ROOTPASS" | passwd -s root
+
+echo -n "password for ${__USERNAME}: "
+read -r __USERPASS
+echo "$__USERPASS" | passwd -s "$__USERNAME"
 
 pacman -S --noconfirm grub efibootmgr
 grub-install "${__DEVICE}1" --bootloader-id=GRUB
@@ -60,6 +66,7 @@ systemctl enable NetworkManager
 systemctl enable systemd-resolved
 timedatectl set-ntp true
 
+exit
 umount /mnt/boot
 umount /mnt
 reboot
