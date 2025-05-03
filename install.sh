@@ -32,11 +32,11 @@ arch-chroot /mnt
 ln -sf /usr/share/zoneinfo/"$__TIMEZONE" /etc/localtime
 hwclock --systohc
 
-sed -i "/${__LOCALE}/s/^#//" /etc/__LOCALE.gen
-__LOCALE-gen
+sed -i "/${__LOCALE}/s/^#//" /etc/locale.gen
+locale-gen
 
-echo "__LANG=${__LANG}" > /etc/__LOCALE.conf
-echo "__KEYMAP=${__KEYMAP}" > /etc/vconsole.conf
+echo "LANG=${__LANG}" > /etc/locale.conf
+echo "KEYMAP=${__KEYMAP}" > /etc/vconsole.conf
 
 echo "$__HOSTNAME" > /etc/hostname
 cat << EOF > /etc/hosts
